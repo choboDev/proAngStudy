@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html ng-app>
+<head>
+    <title>Example</title>
+    <script src="angular.js"></script>
+    <script type="text/javascript">
+        function myFunc(){
+            console.log("This is a statement");
+        };
+        myFunc();
+
+        function myFunc2(name,weather){
+            console.log("Hello "+name+".");
+            console.log("It is "+weather+" today");
+        };
+        myFunc2("Adam","Sunny");
+
+        function myFunc3(name){
+            return ("Hello "+name+".");
+        };
+        console.log(myFunc3("Adam"));
+
+    </script>
+</head>
+<body>
+    This is a simple example
+</body>
+</html>

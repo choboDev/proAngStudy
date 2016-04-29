@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html ng-app="sportsStore">
+<head>
+    <title>SportsStore</title>
+    <script src="angular.js"></script>
+    <link href="bootstrap.css" rel="stylesheet" />
+    <link href="bootstrap-theme.css" rel="stylesheet" />
+
+    <script>
+        angular.module("sportsStore",["customFilters"]);
+
+        angular.module("sportsStore").constant("dataUrl","http://localhost:5500/products").controller("sportsStoreCtrl", function($scope,$http,dataUrl){
+            $scope.data={};
+
+            $http.get(dataUrl).success(function(data){
+                $scope.data.products=data;
+            }).error(function(error){
+                $scope.data.error=error;
+            });
+        });
+        /*--------------------------------------------------------------------------------------------------------------------------------*/
+
+        angular.module("customFilters", []).filter("unique", function(){
+            return function(data, propertyName){
+                if(angular.isArray(data)&&angular.isString(propertyName)) {
+                    var results = [];
+                    var keys = {};
+                    for (var i = 0; i < data.length; i++) {
+                        var val = data[i][propertyName];
+                        if (angular.isUndefined(keys[val])) {
+                            keys[val] = true;
+                            results.push(val);
+                        }
+                    }
+                    return results;
+                }else{
+                    return data;
+                }
+            }
+        }).filter("range",function($filter){
+            return function(data,page,size){
+                if(angular.isArray(data)&&angular.isNumber(page)&&angular.isNumber(size)) {
+                    var start_index = (page - 1) * size;
+                    if (data.length < start_index) {
+                        return [];
+                    } else {
+                        return $filter("limitTo")(data.splice(start_index), size);
+                    }
+                }else {
+                    return data;
+                }
+            }
+        }).filter("pageCount", function(){
+            return function(data,size){
+                if(angular.isArray(data)) {
+                    var result = [];
+                    for (var i = 0; i < Math.ceil(data.length / size); i++) {
+                        result.push(i);
+                    }
+                    return result;
+                }else {
+                    return data;
+                }
+            }
+        })
+
+        /*--------------------------------------------------------------------------------------------------------------------------------*/
+
+        angular.module("sportsStore").constant("productListActiveClass", "btn-primary").constant("productListPageCount",3).controller("productListCtrl", function($scope,$filter,productListActiveClass,productListPageCount){
+
+            var selectedCategory=null;
+
+            $scope.selectedPage=1;
+            $scope.pageSize=productListPageCount;
+
+            $scope.selectCategory=function(newCategory){
+                selectedCategory=newCategory;
+                $scope.selectedPage=1;
+            }
+
+            $scope.selectPage=function(newPage){
+                $scope.selectedPage=newPage;
+            }
+
+            $scope.categoryFilterFn=function(product){
+                return selectedCategory==null || product.category==selectedCategory;
+            }
+            $scope.getCategoryClass=function(category){
+                return selectedCategory==category ? productListActiveClass:"";
+            }
+            $scope.getPageClass=function(page){
+                return $scope.selectedPage==page?productListActiveClass:"";
+            }
+        });
+    </script>
+    <script src="controllers/sportsStore.js"></script>
+    <script src="filters/customFilters.js"></script>
+    <script src="controllers/productListControllers.js"></script>
+</head>
+<body ng-controller="sportsStoreCtrl">
+    <div class="navbar navbar-inverse">
+        <a class="navbar-brand" href="#">SPORTS STORE</a>
+    </div>
+    <div class="panel panel-default row" ng-controller="productListCtrl">
+        <div class="col-xs-3">
+            <a ng-click="selectCategory()" class="btn btn-block btn-default btn-lg">Home</a>
+            <a ng-repeat="item in data.products | orderBy:'category' | unique:'category'" ng-click="selectCategory(item)" class="btn btn-block btn-default btn-lg" ng-class="getCategoryClass(item)">
+                {{item}}
+            </a>
+        </div>
+        <div class="col-xs-8">
+            <div class="well" ng-repeat="item in data.products|filter:categoryFilterFn|range:selectedPage:pageSize">
+                    <h3>
+                        <strong>{{item.name}}</strong>
+                    <span class="pull-right label label-primary">
+                        {{item.price|currency}}
+                    </span>
+                </h3>
+                <span class="lead">{{item.description}}</span>
+            </div>
+            <div class="pull-right btn-group">
+                <a ng-repeat="page in data.products | filter:categoryFilterFn|pageCount:pageSize" ng-click="selectPage($index+1)" class="btn btn-default" ng-class="getPageClass($index+1)">
+                    {{$index+1}}
+                </a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
